@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>想いのお花畑</title>
+    <style>
+        body {
+            margin: 0;
+            background: #e8f5e9;
+            font-family: 'Hiragino Kaku Gothic ProN', 'BIZ UDPGothic', Meiryo, sans-serif;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            height: 100dvh;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin: 5px 0;
+            font-size: 20px;
+            letter-spacing: 1px;
+            color: #2e7d32;
+            text-align: center;
+            font-weight: normal;
+        }
+
+        #field-stage {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            max-width: 500px;
+            background: linear-gradient(135deg, #e8f8f5 0%, #d4efdf 50%, #fef9e7 100%);
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            border: 2px solid #c8e6c9;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .flower-node {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            z-index: 5;
+            transition: transform 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .flower-node:active { transform: scale(1.15); }
+
+        .petal {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            opacity: 0.92;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.7);
+        }
+        .flower-pink .petal { background: linear-gradient(135deg, #ffb7c5, #ff8da1); }
+        .flower-blue .petal { background: linear-gradient(135deg, #b3e0ff, #80cbff); }
+        .flower-yellow .petal { background: linear-gradient(135deg, #fff3b3, #ffe066); }
+        .flower-purple .petal { background: linear-gradient(135deg, #e1bee7, #ce93d8); }
+        .flower-orange .petal { background: linear-gradient(135deg, #ffd1b3, #ffb380); }
+
+        .petal-1 { top: 0; left: 25px; }
+        .petal-2 { bottom: 0; left: 25px; }
+        .petal-3 { top: 25px; left: 0; }
+        .petal-4 { top: 25px; right: 0; }
+
+        .flower-center {
+            position: relative;
+            z-index: 6;
+            width: 54px;
+            height: 54px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            padding: 2px;
+            box-sizing: border-box;
+            border: 1px dotted #dcdcdc;
+        }
+        .flower-title {
+            font-size: 9px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            line-height: 1.1;
+            width: 100%;
+        }
+
+        .ui-buttons {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        button.action-btn {
+            flex: 1;
+            padding: 14px 10px;
+            font-size: 15px;
+            font-weight: bold;
+            background: #e06d83;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        button.action-btn.sub { background: #5c83b0; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #fff;
+            color: #333;
+            padding: 25px 20px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+            box-sizing: border-box;
+        }
+        .modal-content h2 { margin-top: 0; color: #2e7d32; font-size: 19px; border-bottom: 2px dashed #c8e6c9; padding-bottom: 8px; }
+        .close-x {
+            position: absolute;
+            top: 15px; right: 15px;
+            font-size: 22px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        textarea { height: 130px; resize: none; }
+        .char-count { font-size: 12px; color: #777; text-align: right; margin-top: -10px; margin-bottom: 12px; }
+    </style>
+
+    <!-- Firebaseのライブラリ読み込み -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // ==========================================
+        // 🔧 ここにあなたのFirebase設定を貼り付けます
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const colorTypes = ["flower-pink", "flower-blue", "flower-yellow", "flower-purple", "flower-orange"];
+
+        let stories = [];
+
+        function watchDatabase() {
+            onSnapshot(collection(db, "flowers"), (snapshot) => {
+                stories = [];
+                snapshot.forEach((doc) => {
+                    stories.push(doc.data());
+                });
+                renderFlowers();
+            });
+        }
+
+        function renderFlowers() {
+            const stage = document.getElementById('field-stage');
+            if (!stage) return;
+            const oldFlowers = stage.querySelectorAll('.flower-node');
+            oldFlowers.forEach(el => el.remove());
+
+            const stageWidth = stage.clientWidth - 100;
+            const stageHeight = stage.clientHeight - 100;
+
+            stories.forEach((item) => {
+                const flower = document.createElement('div');
+                flower.className = `flower-node ${item.color || 'flower-pink'}`;
+                
+                const randomX = item.posX !== undefined ? item.posX : Math.max(10, Math.random() * stageWidth);
+                const randomY = item.posY !== undefined ? item.posY : Math.max(10, Math.random() * stageHeight);
+                const randomAngle = item.angle !== undefined ? item.angle : (-20 + Math.random() * 40);
+
+                flower.style.left = randomX + 'px';
+                flower.style.top = randomY + 'px';
+                flower.style.transform = `rotate(${randomAngle}deg)`;
+
+                flower.innerHTML = `
+                    <div class="petal petal-1"></div>
+                    <div class="petal petal-2"></div>
+                    <div class="petal petal-3"></div>
+                    <div class="petal petal-4"></div>
+                    <div class="flower-center">
+                        <div class="flower-title">${item.title}</div>
+                    </div>
+                `;
+                
+                flower.onclick = () => showStoryDetail(item);
+                stage.appendChild(flower);
+            });
+        }
+
+        // 投稿をデータベースに送信
+        window.submitStoryToCloud = async function() {
+            const title = document.getElementById('input-title').value.trim();
+            const body = document.getElementById('input-body').value.trim();
+
+            if (!title) {
+                alert("タイトルを入力してください！");
+                return;
+            }
+            if (!body) {
+                alert("物語を入力してください！");
+                return;
+            }
+
+            const randomColor = colorTypes[Math.floor(Math.random() * colorTypes.length)];
+            const stage = document.getElementById('field-stage');
+            const posX = Math.max(10, Math.random() * (stage.clientWidth - 100));
+            const posY = Math.max(10, Math.random() * (stage.clientHeight - 100));
+            const angle = -20 + Math.random() * 40;
+
+            try {
+                // 1. まず投稿画面（モーダル）をすぐ閉じる
+                closeModal('post-modal');
+
+                // 2. データベースに保存
+                await addDoc(collection(db, "flowers"), {
+                    title: title,
+                    body: body,
+                    color: randomColor,
+                    posX: posX,
+                    posY: posY,
+                    angle: angle,
+                    createdAt: serverTimestamp()
+                });
+
+                alert("お花畑に新しいお花が咲きました！🌸 画面を確認してね。");
+            } catch (e) {
+                console.error("エラー: ", e);
+                alert("投稿に失敗しました。設定を確認してください。");
+            }
+        };
+
+        window.showStoryDetail = function(item) {
+            document.getElementById('modal-title').innerText = item.title;
+            document.getElementById('modal-body').innerText = item.body;
+            document.getElementById('story-modal').style.display = 'flex';
+        };
+
+        window.openPeekModal = function() {
+            if (stories.length === 0) {
+                alert("まだお花が咲いていません！");
+                return;
+            }
+            const random = stories[Math.floor(Math.random() * stories.length)];
+            showStoryDetail(random);
+            document.getElementById('story-modal').style.display = 'flex';
+        };
+
+        window.openPostModal = function() {
+            document.getElementById('input-title').value = '';
+            document.getElementById('input-body').value = '';
+            document.getElementById('count').innerText = '0';
+            document.getElementById('post-modal').style.display = 'flex';
+        };
+
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        };
+
+        window.updateCount = function() {
+            const text = document.getElementById('input-body').value;
+            document.getElementById('count').innerText = text.length;
+        };
+
+        window.randomPeek = function() {
+            if (stories.length === 0) return;
+            const random = stories[Math.floor(Math.random() * stories.length)];
+            showStoryDetail(random);
+        };
+
+        window.onload = () => {
+            watchDatabase();
+        };
+    </script>
+</head>
+<body>
+
+    <h1>🌸 想いのお花畑</h1>
+
+    <div id="field-stage">
+        <!-- お花たちがここにリアルタイムで咲きます -->
+    </div>
+
+    <div class="ui-buttons">
+        <button class="action-btn sub" onclick="openPeekModal()">🌸 セカイをのぞく</button>
+        <button class="action-btn" onclick="openPostModal()">✍️ お花を咲かす</button>
+    </div>
+
+    <!-- ① 物語を読むモーダル -->
+    <div id="story-modal" class="modal" onclick="closeModal('story-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-x" onclick="closeModal('story-modal')">&times;</span>
+            <h2 id="modal-title">タイトル</h2>
+            <p id="modal-body" style="line-height: 1.7; white-space: pre-wrap; word-break: break-all; color: #444; font-size: 14px;"></p>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="action-btn sub" style="padding: 8px 16px; font-size: 13px; width: auto;" onclick="randomPeek()">別のセカイをのぞく</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ② お花投稿モーダル -->
+    <div id="post-modal" class="modal" onclick="closeModal('post-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-x" onclick="closeModal('post-modal')">&times;</span>
+            <h2>お花畑に想いを咲かす</h2>
+            
+            <label style="font-weight: bold; font-size: 12px; color: #2e7d32;">タイトル（お花の真ん中）</label>
+            <input type="text" id="input-title" placeholder="例：星降る森の夜" maxlength="25">
+            
+            <label style="font-weight: bold; font-size: 12px; color: #2e7d32;">想像の世界・物語（最大500字）</label>
+            <textarea id="input-body" placeholder="ここに物語を書いてね..." maxlength="500" oninput="updateCount()"></textarea>
+            <div class="char-count"><span id="count">0</span> / 500字</div>
+            
+            <button class="action-btn" style="width: 100%;" onclick="submitStoryToCloud()">お花畑に咲かせる！</button>
+        </div>
+    </div>
+
+</body>
+</html>
